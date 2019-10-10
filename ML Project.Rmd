@@ -1,0 +1,96 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Steve Z"
+date: "October 10, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rpart.plot)
+library(rpart)
+library(lattice)
+library(ggplot2)
+```
+
+## Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Data Sets
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+## Initialization
+```{r }
+suppressWarnings(suppressMessages(library(caret)))
+suppressWarnings(suppressMessages(library(randomForest)))
+suppressWarnings(suppressMessages(library(e1071)))
+trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+training <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""))
+
+```
+
+## Data Prep
+
+# Training Data
+```{r}
+clnColumnIndex <- colSums(is.na(training))/nrow(training) < 0.95
+clean_training_data <- training[,clnColumnIndex]
+colSums(is.na(clean_training_data))/nrow(clean_training_data)
+colSums(is.na(clean_training_data))
+```
+remove columns that we don't want incldued 
+
+```{r}
+clean_training_data <- clean_training_data[,-c(1:7)]
+clean_test_data <- testing[,-c(1:7)]
+
+```
+
+# Cross Validation Data
+```{r}
+xTrainIndex <- createDataPartition(clean_training_data$classe, p=0.75)[[1]]
+xtraining_data <- clean_training_data[xTrainIndex,]
+training_crossval_data <- clean_training_data[-xTrainIndex,]
+
+```
+
+# Test Data
+
+```{r}
+test_Names <- names(clean_training_data)
+clean_test_data <- testing[,test_Names[1:52]]
+
+```
+## ML Algorithm Decision Tree
+Use deicision tree logic to predict outcome.
+Conufsion Matrix used - easy to implement
+
+```{r}
+dtData <- train(classe ~., method='rpart', data=xtraining_data)
+dtPred <- predict(dtData, training_crossval_data)
+confusionMatrix(training_crossval_data$classe, dtPred)
+rpart.plot(dtData$finalModel)
+```
+## ML Algorithm Random Forest
+
+```{r}
+rfMod <- train(classe ~., method='rf', data=xtraining_data)
+rfPred <- predict(rfMod, training_crossval_data)
+confusionMatrix(training_crossval_data$classe, rfPred)
+predict(rfMod, clean_test_data)
+
+```
+## Conclusion
+The Decision Tree Alogirthm has low prediction accuracy ~ 50%.  The Random Forest does a much better job at predicting with > 99% accuracy.  
