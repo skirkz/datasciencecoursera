@@ -1,0 +1,24 @@
+---
+title: "Plotly Presentation"
+author: "Steve Z"
+date: "Nov. 1, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE}
+suppressWarnings(suppressMessages(library(plotly)))
+suppressWarnings(suppressMessages(library(ggplot2)))
+library(plotly)
+```
+
+
+```{r echo=FALSE}
+data("mtcars")
+plot_ly(mtcars, x = ~wt, y = ~hp, mode = "markers", type = "scatter")
+
+```
+
